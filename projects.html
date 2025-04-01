@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پروژه‌های من</title>
+  <link rel="icon" type="image/png" href="/mimg/fav.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <style>
+    /* --- Fonts --- */
+    @import url("https://fonts.googleapis.com/css2?family=Peyda:wght@400;500;600;700&display=swap");
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap');
+
+    /* --- Base & Reset --- */
+    :root {
+      --bg-color: #111111;
+      --nav-bg: #000000;
+      --side-menu-bg: #1c1c1c;
+      --text-color: #e0e0e0;
+      --accent-gold: #FFD700;
+      --accent-orange: #FFA500;
+      --accent-gradient: linear-gradient(45deg, var(--accent-gold), var(--accent-orange));
+      --bubble-border: rgba(255, 215, 0, 0.4);
+      --bubble-bg: linear-gradient(45deg, rgba(255, 215, 0, 0.05), rgba(255, 140, 0, 0.1));
+      --popup-bg: rgba(28, 28, 28, 0.85); /* Darker, slightly less transparent */
+      --font-primary: "Vazirmatn", "Peyda", sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: var(--font-primary);
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      background-color: var(--bg-color);
+    }
+
+    #app {
+      position: relative;
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      min-height: 100vh;
+    }
+
+    /* --- Navbar & Side Menu --- */
+    .navbar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 70px; /* Slightly narrower */
+      height: 100vh;
+      background-color: var(--nav-bg);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .side-menu {
+      position: fixed;
+      top: 0;
+      right: 70px; /* Match navbar width */
+      width: 0;
+      height: 100vh;
+      background-color: var(--side-menu-bg);
+      z-index: 99;
+      overflow: hidden;
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: -3px 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .side-menu.expanded {
+      width: 250px;
+    }
+
+    .logo-container {
+      padding: 25px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .logo {
+      width: 45px; /* Slightly smaller */
+      height: 45px;
+      transition: transform 0.3s ease;
+    }
+    .logo:hover {
+        transform: rotate(15deg);
+    }
+
+    .hamburger {
+      cursor: pointer;
+      margin-top: 150px; /* Adjust as needed */
+      padding: 15px;
+      position: relative;
+      z-index: 101;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+    }
+    .hamburger:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .hamburger-line {
+      width: 28px; /* Slightly shorter */
+      height: 3px;
+      background-color: #fff;
+      margin: 5px 0; /* Closer lines */
+      transition: 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Snappier transition */
+      border-radius: 3px;
+    }
+
+    /* Hamburger animation */
+    .expanded .hamburger-line:first-child {
+      transform: rotate(-45deg) translate(-5px, 6px);
+    }
+    .expanded .hamburger-line:nth-child(2) {
+      opacity: 0;
+      transform: scale(0);
+    }
+    .expanded .hamburger-line:last-child {
+      transform: rotate(45deg) translate(-5px, -6px);
+    }
+
+    .menu-links {
+      text-align: center;
+      width: 100%;
+      opacity: 0;
+      transition: opacity 0.2s ease 0.1s;
+    }
+    .side-menu.expanded .menu-links {
+        opacity: 1;
+        transition-delay: 0.2s; /* Fade in links after menu expands */
+    }
+
+    .menu-links a {
+      display: block;
+      padding: 18px 25px;
+      text-decoration: none;
+      color: var(--text-color);
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 8px 0;
+      transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .menu-links a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-gradient);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+        transform-origin: bottom;
+    }
+
+    .menu-links a:hover, .menu-links a.active {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      transform: translateX(-5px); /* Slight shift on hover */
+    }
+
+    .menu-links a:hover::before, .menu-links a.active::before {
+        transform: scaleY(1);
+        transform-origin: top;
+    }
+    .menu-links a.active {
+        color: var(--accent-gold); /* Highlight active link */
+    }
+
+    /* --- Overlay --- */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0; /* Cover the whole screen */
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+      z-index: 98;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.35s ease, visibility 0s 0.35s;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+      transition-delay: 0s;
+    }
+
+    /* --- Main Content --- */
+    .main-content {
+      width: calc(100vw - 70px); /* Adjust for navbar width */
+      margin-right: 70px; /* Adjust for navbar width */
+      min-height: 100vh;
+      padding: 30px 40px;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), filter 0.35s ease;
+      position: relative; /* Needed for absolute positioning of title */
+    }
+
+    /* Shift content effect - subtle blur instead of just translate */
+    .main-content.shifted {
+      transform: translateX(-250px) scale(0.98); /* Slight scale down */
+      filter: blur(2px);
+      pointer-events: none; /* Prevent interaction when shifted */
+    }
+
+    /* --- Page Title --- */
+    .page-title-container {
+        text-align: center;
+        margin-bottom: 40px; /* More space below title */
+        padding: 15px 0;
+        position: relative;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    }
+
+    .page-title {
+        color: #fff; /* Brighter title */
+        font-size: 2.8rem;
+        font-weight: 700;
+        position: relative;
+        display: inline-block; /* Keep inline-block for centering */
+        padding-bottom: 10px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        -text-fill-color: transparent; /* Standard property */
+    }
+
+    .page-title::after {
+        content: '';
+        position: absolute;
+        bottom: -1px; /* Sit on top of the container border */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background: var(--accent-gradient);
+        border-radius: 3px;
+    }
+
+
+    /* --- Bubble Chart --- */
+    .bubble-container {
+      width: 100%;
+      /* Calculate height dynamically based on viewport, minus padding/title */
+      height: calc(100vh - 180px);
+      min-height: 400px; /* Minimum height */
+      position: relative;
+      display: flex; /* Use flex for fallback */
+      justify-content: center; /* Use flex for fallback */
+      align-items: center; /* Use flex for fallback */
+      margin: 0 auto;
+    }
+
+    .bubble {
+      position: absolute; /* D3 will set left/top */
+      border-radius: 50%;
+      background: var(--bubble-bg);
+      border: 1.5px solid var(--bubble-border);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), /* Smoother pop */
+                  box-shadow 0.4s ease,
+                  border-color 0.3s ease;
+      overflow: hidden;
+      animation: float 6s ease-in-out infinite alternate; /* Slower, alternate */
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2),
+                  inset 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle inner shadow */
+    }
+
+    .bubble:hover {
+      transform: scale(1.1); /* More pronounced hover scale */
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), /* Gold glow */
+                  inset 0 0 15px rgba(0, 0, 0, 0.1);
+      border-color: rgba(255, 215, 0, 0.7);
+      z-index: 10; /* Bring hovered bubble to front */
+      animation-play-state: paused; /* Stop floating on hover */
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0px) translateX(0px);
+      }
+      50% {
+        transform: translateY(-8px) translateX(4px) rotate(2deg); /* Add slight rotation */
+      }
+      100% {
+        transform: translateY(5px) translateX(-3px) rotate(-1deg);
+      }
+    }
+
+    .bubble-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      transition: filter 0.4s ease, opacity 0.4s ease;
+      opacity: 0.85; /* Slightly dimmed initially */
+      filter: grayscale(30%); /* Slight desaturation */
+    }
+
+    .bubble:hover .bubble-image {
+      opacity: 1;
+      filter: grayscale(0%); /* Full color on hover */
+    }
+
+    /* --- Project Popup --- */
+    .project-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      /* Start slightly above center and scaled down for entry animation */
+      transform: translate(-50%, -45%) scale(0.95);
+      width: 90%;
+      max-width: 550px; /* Slightly wider */
+      background: var(--popup-bg);
+      backdrop-filter: blur(12px); /* Stronger blur */
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 25px 30px;
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0.35s;
+      border: 1px solid rgba(255, 215, 0, 0.2); /* Softer border */
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .project-popup.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1); /* Center and full scale */
+      transition-delay: 0s;
+    }
+
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2); /* Thinner border */
+    }
+
+    .popup-title {
+      font-size: 1.8rem; /* Larger title */
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      -text-fill-color: transparent;
+    }
+
+    .popup-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #fff;
+      font-size: 1.6rem;
+      cursor: pointer;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .popup-close:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: rotate(90deg);
+    }
+
+    .popup-content {
+      margin-bottom: 20px;
+    }
+
+    .popup-image {
+      width: 100%;
+      height: 200px; /* Slightly taller image */
+      object-fit: cover;
+      border-radius: 8px; /* Softer corners */
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .popup-description {
+      line-height: 1.8; /* More spacing for readability */
+      margin-bottom: 20px;
+      font-size: 0.98rem;
+      color: var(--text-color); /* Ensure good contrast */
+    }
+
+    .popup-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px; /* More space between tags */
+      margin-bottom: 25px; /* Space before link */
+    }
+
+    .tag {
+      padding: 5px 12px;
+      background: rgba(255, 215, 0, 0.15); /* Subtle background */
+      color: var(--accent-gold); /* Gold text */
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 20px; /* Pill shape */
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase; /* Uppercase tags */
+      letter-spacing: 0.5px;
+    }
+
+    .popup-link {
+      display: inline-block;
+      padding: 12px 28px;
+      background: var(--accent-gradient);
+      color: #000; /* Black text for contrast on gradient */
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+    }
+
+    .popup-link:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(255, 165, 0, 0.5);
+    }
+
+    /* --- Loading State --- */
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: var(--bg-color); /* Match background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease;
+    }
+    .loading.fade-out {
+        opacity: 0;
+    }
+
+    .loading-spinner {
+      width: 60px; /* Slightly smaller */
+      height: 60px;
+      border: 4px solid rgba(255, 215, 0, 0.2); /* Lighter border base */
+      border-top: 4px solid var(--accent-gold); /* Accent color spinner */
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* --- Responsive Design --- */
+    @media (max-width: 768px) {
+      .navbar {
+        width: 100%;
+        height: 60px;
+        bottom: 0;
+        top: auto;
+        flex-direction: row;
+        justify-content: space-between; /* Logo left, Ham right */
+        padding: 0 20px;
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.3); /* Shadow on top */
+      }
+
+      .logo-container {
+        padding: 5px 0;
+        /* Align logo to the right (start in RTL) */
+        order: 1;
+      }
+      .logo {
+          width: 80px;
+          height: 0px;
+      }
+
+      .hamburger {
+        margin-top: 0;
+        padding: 10px;
+         /* Align hamburger to the left (end in RTL) */
+        order: 2;
+      }
+
+      .side-menu {
+        right: 0;
+        width: 100%;
+        height: 0;
+        top: auto; /* Position relative to bottom */
+        bottom: 60px; /* Above the navbar */
+        transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: none; /* Remove side shadow */
+        border-top: 1px solid rgba(255,255,255,0.1); /* Separator line */
+      }
+
+      .side-menu.expanded {
+        height: calc(100vh - 60px); /* Almost full height */
+        max-height: 300px; /* Limit height */
+      }
+
+      .main-content {
+        width: 100%;
+        margin-right: 0;
+        /* Add padding-bottom to avoid overlap with fixed navbar */
+        padding: 20px 15px 80px 15px;
+      }
+
+      /* Adjust main content shift for bottom menu */
+      .main-content.shifted {
+         /* No horizontal shift or blur needed */
+         transform: none;
+         filter: none;
+         pointer-events: auto;
+      }
+      /* Instead, dim the content slightly */
+      .overlay.active + .main-content {
+          filter: brightness(0.7);
+      }
+
+      .page-title {
+        font-size: 2.2rem;
+      }
+       .page-title-container {
+        margin-bottom: 30px;
+      }
+
+      .bubble-container {
+        /* Adjust height calculation for mobile */
+        height: calc(100vh - 200px);
+        min-height: 350px;
+      }
+
+      .project-popup {
+        width: 95%;
+        padding: 20px;
+        max-height: 85vh; /* Limit height on small screens */
+        overflow-y: auto; /* Allow scrolling within popup */
+      }
+
+      .popup-title {
+        font-size: 1.5rem;
+      }
+      .popup-image {
+        height: 160px;
+      }
+      .popup-description {
+        font-size: 0.9rem;
+      }
+      .popup-link {
+        padding: 10px 24px;
+        font-size: 0.9rem;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Particles background -->
+  <div id="particles-js"></div>
+
+  <!-- Vue App Root -->
+  <div id="app">
+    <!-- Loading Overlay -->
+    <div class="loading" v-if="loading" :class="{ 'fade-out': !loading }">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="navbar" :class="{ expanded: menuExpanded }">
+      <div class="logo-container">
+        <a href="/index.html" aria-label="صفحه اصلی">
+            <img class="logo" src="/mimg/logo.png" alt="لوگو" />
+        </a>
+      </div>
+      <div class="hamburger" @click="toggleMenu" role="button" aria-label="تغییر وضعیت منو" :aria-expanded="menuExpanded.toString()">
+        <div class="hamburger-line"></div>
+        <div class="hamburger-line"></div>
+        <div class="hamburger-line"></div>
+      </div>
+    </div>
+
+    <!-- Side Menu -->
+    <div class="side-menu" :class="{ expanded: menuExpanded }">
+      <nav class="menu-links" aria-label="منوی اصلی">
+        <a href="../index.html">صفحه اصلی</a>
+        <a href="../about.html">درباره من</a>
+        <a href="../projects" class="active">پروژه ها</a> <!-- Assuming this is the current page -->
+        <a href="../skills.html">مهارت ها</a>
+        <a href="../contact.html">تماس با من</a>
+      </nav>
+    </div>
+
+    <!-- Overlay for closing menu -->
+    <div class="overlay" :class="{ active: menuExpanded }" @click="closeMenu"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-content" :class="{ shifted: menuExpanded && windowWidth > 768 }" id="main">
+      <!-- Page Title -->
+      <div class="page-title-container">
+        <h1 class="page-title">همکاری‌های من</h1>
+      </div>
+
+      <!-- Bubble Chart Container -->
+      <div class="bubble-container" ref="bubbleContainer">
+          <!-- Bubbles will be added here by D3 -->
+      </div>
+
+      <!-- Project Details Popup -->
+      <div class="project-popup" :class="{ active: activeProject !== null }" @click.self="closeProject" role="dialog" aria-modal="true" :aria-labelledby="activeProject ? 'popup-title' : null" >
+        <div v-if="activeProject">
+            <header class="popup-header">
+              <h2 class="popup-title" id="popup-title">{{ activeProject.title }}</h2>
+              <button class="popup-close" @click="closeProject" aria-label="بستن پنجره">×</button>
+            </header>
+            <section class="popup-content">
+              <img :src="activeProject.image" :alt="activeProject.title" class="popup-image" loading="lazy">
+              <p class="popup-description">{{ activeProject.description }}</p>
+              <div class="popup-tags" v-if="activeProject.tags && activeProject.tags.length">
+                <span class="tag" v-for="tag in activeProject.tags" :key="tag">{{ tag }}</span>
+              </div>
+              <a :href="activeProject.link" class="popup-link" target="_blank" rel="noopener noreferrer">
+                مشاهده پروژه <span aria-hidden="true">→</span>
+              </a>
+            </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    const { createApp, ref, onMounted, onBeforeUnmount, computed } = Vue;
+
+    createApp({
+      setup() {
+        const menuExpanded = ref(false);
+        const bubbleContainer = ref(null);
+        const activeProject = ref(null);
+        const loading = ref(true);
+        const projectsData = ref([ // Use ref for potential future dynamic loading
+          // --- Sample Project Data (Replace placeholders) ---
+          { id: 1, title: "تیم آکادمیک ویرا ", image: "/mimg/vira.png", description: "همکاری با مجله/ پیج علمی برای اخبار جدید علم، تکنولوژی و سلامت که با هدف بهبود سطح دانش اخبار علمی در فضای مجازی شکل گرفت.", tags: ["خبرنگار علم", "فناوری", "تولید محتوا"], link: "https://t.me/virauniversitycom", baseSize: 120 },
+          { id: 2, title: "سردبیری مجله مرکب", image: "/mimg/morakab.jpg", description:"مجله‌ای در راستای حایت از نویسندگان جوان با محوریت علوم،هنر،ادبیات،اجتماعی و پادکست که در با حمایت مخاطبین منتشر می‌شد.", tags: ["نویسندگی", "مدیریت", "گرافیک"], link: "https://virgool.io/morakab-mag", baseSize: 110 },
+          { id: 3, title: "پادکست وولکانو | Volcano", image: "/mimg/Volcano.jpg", description: "پادکستی با محتوا و موضوع مهندسی  که  به اهتمام انجمن علمی مهندسی مواد دانشگاه فردوسی شکل گرفت. در این پادکست با همکاری تیم توسعه و تیم تحقیقات نزدیک به 20 قسمت در دو ژانر مواد و علوم مهندسی منتظر شد.", tags: ["تولید محتوا", "تحقیقات", "طراحی گرافیک لوگو و پوستر", "کارگروه مدیریتی"], link: "https://t.me/volcano_padcast", baseSize: 115 },
+          { id: 4, title: "انجمن علمی نانوتکنولوژی", image: "/mimg/nano.png", description: "همکاری عمده با انجن نانوی دانشگاه فردوسی در زمینه‌های مختلف از جمله برگزاری مسابقات،طراحی گرافیکی،براقرای بازدیدهای علمی و دیگر فعالیت‌های پژوهشی -فناورانه در زمینه‌های مختلف.", tags: ["کار گروهی", "باز طراحی لوگوی انجمن", "فناور"], link: "https://t.me/s/anjnano_fum/2226", baseSize: 110 },
+          { id: 5, title: "تیم مترجمین  TED", image: "mimg/ted.jpg", description: "عضو و فعال تیم همکاری ،ٍTED Translators در راستای رساندن دانش و ایده‌ها به فارسی زبانان سراسر جهان.", tags: ["English", "Deutsch", "کار گروهی"], link: "https://www.ted.com/profiles/15082853", baseSize: 115 },
+          { id: 6, title: "Signalist", image: "/mimg/signalist.jpeg", description: "تولید و طراحی محتوای علمی در راستای مهندسی برق و تکنولوژی برای مخاطبین عمده," , tags: ["محتوای علمی", "گرافیست", "پادکستر"], link: "#", baseSize: 110 },
+          { id: 7, title: "Funglish writer", image: "/mimg/funglish.png", description: "Fanglish Magazine was aimed to help English learners improve their language skills in an engaging and entertaining way. The magazine featured a variety of content, including educational articles, vocabulary exercises, grammar tips, short stories, fun quizzes, and interactive activities.", tags: ["English", "Writing", "Productivity"], link: "https://fidibo.com/series/231-%D9%81%D8%A7%D9%86%DA%AF%D9%84%DB%8C%D8%B4", baseSize: 115 },
+          { id: 8, title: "شرکت  SEG", image: "/mimg/seg.jpeg", description:  "سابقه همکاری و کارآموزی در شرکت سروینا فناور پارک علم و فناوری خراسان در راستای هوشمندسازی، طراحی گرافیکی و برنامه نویسی وب و شبکه.", tags: ["HTML", "CSS", "Machine Learning", "Javascript"], link: "#", baseSize: 135 },
+           // Add more projects... make sure images are real or use placeholders consistently
+          { id: 9, title: "سایت باشگاه سوارکاری آرادلند", image: "/mimg/arad.png", description: " طراحی سایت پویا و فعال با تمرکز بر سئو و جایگاه گوگل برای باشگاه سوارکاری آرادلند. اضافه نمودن محیط تعاملی و پویا و فروشگاه خرید و فروش اسب ", tags: ["Html", "CSS", "JavaScript"], link: "https://arad.land", baseSize: 135 },
+          { id: 10, title: "تیم تولید محتوای رستا", image: "/mimg/rasta.jpg", description: "همکاری با تیم تولید محتوای رستا در حوزه تکنولوژی و آموزش علم در فضای مجازی ", tags: ["فناور", "کار گروهی", "مدیریت", "کارگروهی"], link: "#", baseSize: 110 },
+          { id: 11, title: "کمپ کتاب‌خوانی", image: "/mimg/bookc.png", description: " برگزاری کمپ کتابخوانی در راستای افزایش تعامل دانش آموزان با کتاب‌خوانی با رویکرد فلسفی و بازی‌گرایانه.",  tags: ["طراح گرافیکی", "بازی‌ساز", "تسیهلگر", "عضو کارگروه مدیریتی"], link: "#", baseSize: 105 },
+        ]);
+
+
+        const windowWidth = ref(window.innerWidth);
+        let simulation = null; // Store simulation reference
+
+        // --- Computed property for responsive bubble sizes ---
+        const projects = computed(() => {
+            const scaleFactor = windowWidth.value <= 768 ? 0.65 : 1.0;
+            const minSize = windowWidth.value <= 768 ? 50 : 70;
+            const maxSize = windowWidth.value <= 768 ? 85 : 140;
+
+            return projectsData.value.map(p => ({
+                ...p,
+                size: Math.max(minSize, Math.min(maxSize, p.baseSize * scaleFactor))
+            }));
+        });
+
+        // --- Menu Logic ---
+        function toggleMenu() {
+          menuExpanded.value = !menuExpanded.value;
+        }
+        function closeMenu() {
+          menuExpanded.value = false;
+        }
+
+        // --- Project Popup Logic ---
+        function openProject(project) {
+          activeProject.value = project;
+          if (menuExpanded.value && windowWidth.value <= 768) { // Only close menu on mobile if open
+            closeMenu();
+          }
+        }
+        function closeProject() {
+          activeProject.value = null;
+        }
+
+        // --- D3 Bubble Chart Initialization ---
+        function initBubbleChart() {
+          if (!bubbleContainer.value) return;
+
+          const container = d3.select(bubbleContainer.value);
+          container.selectAll('*').remove(); // Clear previous elements
+
+          const containerWidth = bubbleContainer.value.clientWidth;
+          const containerHeight = bubbleContainer.value.clientHeight;
+          const isMobile = windowWidth.value <= 768;
+
+          // Create or update simulation
+          simulation = d3.forceSimulation(projects.value) // Use computed projects
+            .force("center", d3.forceCenter(containerWidth / 2, containerHeight / 2).strength(0.05)) // Weaker center force
+            .force("charge", d3.forceManyBody().strength(isMobile ? 5 : 15)) // Adjust strength
+            .force("collide", d3.forceCollide().radius(d => d.size / 2 + (isMobile ? 8 : 15)).iterations(2)) // Adjust padding
+            .force("x", d3.forceX(containerWidth / 2).strength(0.03)) // Gently pull towards horizontal center
+            .force("y", d3.forceY(containerHeight / 2).strength(0.03)) // Gently pull towards vertical center
+            .on("tick", ticked);
+
+          // Apply initial positions more centrally
+          projects.value.forEach(node => {
+            node.x = containerWidth / 2 + (Math.random() - 0.5) * 50;
+            node.y = containerHeight / 2 + (Math.random() - 0.5) * 50;
+          });
+
+          simulation.nodes(projects.value); // Update nodes in simulation
+          simulation.alpha(0.8).restart(); // Restart with higher alpha initially
+        }
+
+        // --- D3 Ticked Function (Optimized) ---
+        function ticked() {
+            if (!bubbleContainer.value) return;
+
+            const containerWidth = bubbleContainer.value.clientWidth;
+            const containerHeight = bubbleContainer.value.clientHeight;
+
+            // D3 Join Pattern (Enter, Update, Exit)
+            const bubbleSelection = d3.select(bubbleContainer.value)
+                .selectAll('.bubble')
+                .data(projects.value, d => d.id); // Use project ID as key
+
+            // Exit: Remove bubbles that no longer exist
+            bubbleSelection.exit().transition().duration(300).style('opacity', 0).remove();
+
+            // Enter: Create new bubbles
+            const bubbleEnter = bubbleSelection.enter()
+                .append('div')
+                .attr('class', 'bubble')
+                .style('opacity', 0) // Start transparent
+                .style('width', d => `${d.size}px`)
+                .style('height', d => `${d.size}px`)
+                .style('left', d => `${d.x ? d.x - d.size / 2 : containerWidth / 2 - d.size / 2}px`) // Initial position
+                .style('top', d => `${d.y ? d.y - d.size / 2 : containerHeight / 2 - d.size / 2}px`)
+                .style('animation-delay', (d, i) => `${i * 0.1}s`) // Stagger animation
+                .on('click', (event, d) => openProject(d))
+                .call(d3.drag() // Optional: Allow dragging bubbles
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            // Add image to new bubbles
+            bubbleEnter.append('img')
+                .attr('src', d => d.image)
+                .attr('alt', d => d.title)
+                .attr('class', 'bubble-image')
+                .attr('loading', 'lazy'); // Lazy load images
+
+            // Update: Position existing and new bubbles
+            bubbleSelection.merge(bubbleEnter)
+                .transition() // Smooth transition for updates
+                .duration(50) // Short duration for tick updates
+                .ease(d3.easeLinear)
+                .style('opacity', 1) // Fade in new bubbles
+                .style('left', d => `${Math.max(0, Math.min(containerWidth - d.size, d.x - d.size / 2))}px`) // Keep within bounds
+                .style('top', d => `${Math.max(0, Math.min(containerHeight - d.size, d.y - d.size / 2))}px`);
+        }
+
+        // --- D3 Drag Handlers (Optional) ---
+        function dragstarted(event, d) {
+            if (!event.active && simulation) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+            d3.select(this).raise().style('cursor', 'grabbing'); // Bring dragged bubble to front
+        }
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        function dragended(event, d) {
+            if (!event.active && simulation) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+            d3.select(this).style('cursor', 'pointer');
+        }
+
+
+        // --- Particles.js Initialization ---
+        function initParticles() {
+          particlesJS("particles-js", {
+            "particles": {
+              "number": { "value": 60, "density": { "enable": true, "value_area": 800 } }, // Fewer particles
+              "color": { "value": "#FFA500" }, // Use accent orange
+              "shape": { "type": "circle" },
+              "opacity": { "value": 0.6, "random": true }, // More transparent
+              "size": { "value": 2, "random": true },
+              "line_linked": { "enable": true, "distance": 180, "color": "#FFA500", "opacity": 0.40, "width": 1 }, // Fainter lines
+              "move": { "enable": true, "speed": 1, "direction": "none", "random": true, "straight": false, "out_mode": "out" } // Slower speed
+            },
+            "interactivity": {
+              "detect_on": "canvas",
+              "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": false } }, // Disable click interaction
+              "modes": { "repulse": { "distance": 100, "duration": 0.4 } }
+            },
+            "retina_detect": true
+          });
+        }
+
+        // --- Resize Handling ---
+        const handleResize = () => {
+          windowWidth.value = window.innerWidth;
+          // Debounce or throttle resize events for performance if needed
+          if (simulation && bubbleContainer.value) {
+            const containerWidth = bubbleContainer.value.clientWidth;
+            const containerHeight = bubbleContainer.value.clientHeight;
+            // Update forces based on new dimensions
+            simulation.force("center", d3.forceCenter(containerWidth / 2, containerHeight / 2).strength(0.05));
+            simulation.force("x", d3.forceX(containerWidth / 2).strength(0.03));
+            simulation.force("y", d3.forceY(containerHeight / 2).strength(0.03));
+            simulation.alpha(0.5).restart(); // Reheat simulation slightly
+          } else {
+             // If simulation not yet started, init it on resize after loading
+             if(!loading.value) initBubbleChart();
+          }
+        };
+
+
+        // --- Lifecycle Hooks ---
+        onMounted(() => {
+          window.addEventListener('resize', handleResize);
+
+          // Simulate loading, then init chart and particles
+          setTimeout(() => {
+            loading.value = false;
+            // Use nextTick to ensure DOM is fully updated after loading=false
+            Vue.nextTick(() => {
+                initParticles();
+                // Delay bubble chart init slightly more to ensure layout is stable
+                setTimeout(initBubbleChart, 100);
+            });
+          }, 1200); // Slightly shorter loading time
+        });
+
+        onBeforeUnmount(() => {
+          window.removeEventListener('resize', handleResize);
+          if (simulation) {
+              simulation.stop(); // Stop simulation on component unmount
+          }
+        });
+
+        // --- Return reactive state and methods ---
+        return {
+          menuExpanded,
+          bubbleContainer,
+          activeProject,
+          loading,
+          projects, // Use computed projects
+          windowWidth, // Expose for conditional classes/styles
+
+          toggleMenu,
+          closeMenu,
+          openProject,
+          closeProject,
+        };
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>
